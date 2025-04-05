@@ -1,0 +1,24 @@
+server {
+  listen 80;
+  server_name alpha;
+
+  location = /admin/readme.md {
+    return 200 "200";
+  }
+  location ^~ /admin {
+    return 403 "400";
+  }
+  location ~* \.jpg$ {
+    return 202 "202";
+  }
+  location ~* \.png$ {
+    return 202 "202";
+  }
+  location ~ \.TXT$ {
+    return 204 "204";
+  }
+  location ~ \.txt {
+    return 404 "404";
+  }
+
+}
