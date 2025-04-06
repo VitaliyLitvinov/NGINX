@@ -1,0 +1,14 @@
+server {
+  listen 80;
+  server_name alpha;
+  index test1.html test2.html;
+  root /opt/www/files;
+  error_page 404 = @404;
+  location = /heya.html {
+    alias /tmp/test3.html;
+  }
+  location @404 {
+    return 204 "204";
+  }
+
+}
