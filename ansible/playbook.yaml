@@ -1,0 +1,72 @@
+---
+- name: Setup Docker and Nginx Load Balancer
+  hosts: load_balancer
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        state: present
+
+    - name: Install Docker CE
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull web application images from private registry
+      docker_image:
+        name: vitaliylitvinov/web_app/flask_app
+        tag: latest
+        source: pull
+
+    - name: Deploy web application instances
+      docker_container:
+        name: webapp_instance_{{ item }}
+        image: vitaliylitvinov/web_app/flask_app
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80"
+        with_items:
+          - [1, 2, 3]
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Configure Nginx for Load Balancing
+      template:
+        src: nginx_load_balancer.conf.j2
+        dest: /etc/nginx/sites-available/load_balancer.conf
+
+    - name: Enable Load Balancer Configuration
+      command: nginx -s reload
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
